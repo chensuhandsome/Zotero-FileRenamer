@@ -1,0 +1,19 @@
+{
+  "addons": {
+    "zotero-filerenamer@user": {
+      "updates": [
+        {
+          "version": "1.0.0",
+          "update_link": "https://github.com/user/zotero-filerenamer/releases/download/v1.0.0/zotero-filerenamer.xpi",
+          "update_hash": "sha512:79b6bb9622478e4ecfb092067f1ccf37cb2755c3c103bad16f0dd7c22a5be09d663f4883958901f6a5f4afad8d4cb13696b5536ec2baa30d1f0917981cefc98d",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "6.999",
+              "strict_max_version": "9.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

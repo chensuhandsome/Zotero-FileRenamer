@@ -1,0 +1,9 @@
+pref("extensions.zotero.filerenamer.autoUpdateEnabled", true);
+pref("extensions.zotero.filerenamer.autoUpdateFreqHours", 24);
+pref("extensions.zotero.filerenamer.offlineMode", false);
+pref("extensions.zotero.filerenamer.maxLabelsShown", 5);
+pref("extensions.zotero.filerenamer.labelColor", "#dc2626");
+pref("extensions.zotero.filerenamer.highlightBasicTitles", false);
+pref("extensions.zotero.filerenamer.derivedTitleColor", "#2563eb");
+pref("extensions.zotero.filerenamer.highlightDerivedTitles", false);
+pref("extensions.zotero.filerenamer.basicLabelPrefix", "A");

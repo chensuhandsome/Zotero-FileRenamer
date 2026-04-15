@@ -1,0 +1,162 @@
+<linkset>
+</linkset>
+<!-- Preferences declarations -->
+<preferences>
+  <preference id="pref-autoUpdateEnabled" name="extensions.zotero.filerenamer.autoUpdateEnabled" type="bool" />
+  <preference id="pref-autoUpdateFreqHours" name="extensions.zotero.filerenamer.autoUpdateFreqHours" type="int" />
+  <preference id="pref-offlineMode" name="extensions.zotero.filerenamer.offlineMode" type="bool" />
+  <preference id="pref-maxLabelsShown" name="extensions.zotero.filerenamer.maxLabelsShown" type="int" />
+  <preference id="pref-labelColor" name="extensions.zotero.filerenamer.labelColor" type="string" />
+  <preference id="pref-highlightBasicTitles" name="extensions.zotero.filerenamer.highlightBasicTitles" type="bool" />
+  <preference id="pref-derivedTitleColor" name="extensions.zotero.filerenamer.derivedTitleColor" type="string" />
+  <preference id="pref-highlightDerivedTitles" name="extensions.zotero.filerenamer.highlightDerivedTitles" type="bool" />
+  <preference id="pref-basicLabelPrefix" name="extensions.zotero.filerenamer.basicLabelPrefix" type="string" />
+</preferences>
+
+<vbox id="zotero-prefpane-zoterofilerenamer" style="padding: 12px">
+  <html:style>
+    .fr-pref-section {
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: var(--material-background, #f8fafc);
+      border: 1px solid var(--fill-tertiary, #e2e8f0);
+      border-radius: 8px;
+    }
+    .fr-pref-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fill-primary, #1e293b);
+      margin: 0 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--fill-quinary, #e2e8f0);
+    }
+    .fr-pref-desc {
+      font-size: 11px;
+      color: var(--fill-secondary, #64748b);
+      margin-top: 4px;
+      margin-left: 20px;
+    }
+    .fr-pref-row {
+      margin-bottom: 8px;
+    }
+    .fr-pref-input {
+      padding: 4px 8px;
+      border: 1px solid var(--fill-tertiary, #cbd5e1);
+      border-radius: 4px;
+      background: var(--material-background, white);
+    }
+  </html:style>
+
+  <vbox class="fr-pref-section">
+    <html:h3 class="fr-pref-title">Auto-Update</html:h3>
+    <vbox class="fr-pref-row">
+      <checkbox
+        id="zotero-prefpane-zoterofilerenamer-autoUpdateEnabled"
+        preference="extensions.zotero.filerenamer.autoUpdateEnabled"
+        label="Enable automatic label refresh"
+      />
+      <html:p class="fr-pref-desc">Periodically refresh eligible labels in the background by reusing or updating INSPIRE cache data.</html:p>
+    </vbox>
+    <vbox class="fr-pref-row" style="margin-top: 8px">
+      <hbox align="center">
+        <label value="Update frequency (hours):" />
+        <html:input
+          type="number"
+          id="zotero-prefpane-zoterofilerenamer-autoUpdateFreqHours"
+          preference="extensions.zotero.filerenamer.autoUpdateFreqHours"
+          min="1"
+          max="168"
+          class="fr-pref-input"
+          style="width: 60px; margin-left: 8px"
+        />
+      </hbox>
+      <html:p class="fr-pref-desc">Changes here take effect immediately for the running auto-update task.</html:p>
+    </vbox>
+  </vbox>
+
+  <vbox class="fr-pref-section">
+    <html:h3 class="fr-pref-title">Network</html:h3>
+    <vbox class="fr-pref-row">
+      <checkbox
+        id="zotero-prefpane-zoterofilerenamer-offlineMode"
+        preference="extensions.zotero.filerenamer.offlineMode"
+        label="Offline Mode (use cache only, no INSPIRE requests)"
+      />
+      <html:p class="fr-pref-desc">When enabled, only cached data is used. No network requests will be made.</html:p>
+    </vbox>
+  </vbox>
+
+  <vbox class="fr-pref-section">
+    <html:h3 class="fr-pref-title">Labeling</html:h3>
+    <vbox class="fr-pref-row" style="margin-top: 8px">
+      <hbox align="center">
+        <label value="Max labels shown per item:" />
+        <html:input
+          type="number"
+          id="zotero-prefpane-zoterofilerenamer-maxLabelsShown"
+          preference="extensions.zotero.filerenamer.maxLabelsShown"
+          min="1"
+          max="20"
+          class="fr-pref-input"
+          style="width: 60px; margin-left: 8px"
+        />
+      </hbox>
+      <html:p class="fr-pref-desc">Extra labels stay in metadata, while the title prefix shows a +N summary.</html:p>
+    </vbox>
+    <vbox class="fr-pref-row" style="margin-top: 8px">
+      <hbox align="center">
+        <label value="Basic label prefix:" />
+        <html:input
+          type="text"
+          id="zotero-prefpane-zoterofilerenamer-basicLabelPrefix"
+          preference="extensions.zotero.filerenamer.basicLabelPrefix"
+          class="fr-pref-input"
+          style="width: 60px; margin-left: 8px"
+          maxlength="5"
+          placeholder="A"
+        />
+      </hbox>
+      <html:p class="fr-pref-desc">New basic labels follow this prefix, such as [A1], [A2] or [N1], [N2]. Leave it empty to use [1], [2], [3].</html:p>
+    </vbox>
+    <vbox class="fr-pref-row" style="margin-top: 8px">
+      <checkbox
+        id="zotero-prefpane-zoterofilerenamer-highlightBasicTitles"
+        preference="extensions.zotero.filerenamer.highlightBasicTitles"
+        label="Highlight basic titles"
+      />
+      <html:p class="fr-pref-desc">Color items with first-order/basic labels only. Other items keep Zotero's default title color.</html:p>
+    </vbox>
+    <vbox class="fr-pref-row" style="margin-top: 8px; margin-left: 20px">
+      <hbox align="center">
+        <label value="First-order title color:" />
+        <html:input
+          type="color"
+          id="zotero-prefpane-zoterofilerenamer-labelColor"
+          preference="extensions.zotero.filerenamer.labelColor"
+          class="fr-pref-input"
+          style="width: 48px; margin-left: 8px"
+        />
+      </hbox>
+    </vbox>
+    <vbox class="fr-pref-row" style="margin-top: 8px">
+      <checkbox
+        id="zotero-prefpane-zoterofilerenamer-highlightDerivedTitles"
+        preference="extensions.zotero.filerenamer.highlightDerivedTitles"
+        label="Highlight derived titles"
+      />
+      <html:p class="fr-pref-desc">Color items that only have derived labels, such as [A1-23], while first-order items keep their own color.</html:p>
+    </vbox>
+    <vbox class="fr-pref-row" style="margin-top: 8px; margin-left: 20px">
+      <hbox align="center">
+        <label value="Derived title color:" />
+        <html:input
+          type="color"
+          id="zotero-prefpane-zoterofilerenamer-derivedTitleColor"
+          preference="extensions.zotero.filerenamer.derivedTitleColor"
+          class="fr-pref-input"
+          style="width: 48px; margin-left: 8px"
+        />
+      </hbox>
+    </vbox>
+  </vbox>
+</vbox>
