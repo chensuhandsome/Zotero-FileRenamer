@@ -4271,29 +4271,55 @@ html {
     }
     return [];
   }
+  function getSelectedCollections() {
+    if (typeof ZoteroPane.getSelectedCollections === "function") {
+      return ZoteroPane.getSelectedCollections() ?? [];
+    }
+    const collection = ZoteroPane.getSelectedCollection();
+    return collection ? [collection] : [];
+  }
+  function getSelectedLibraryIDs() {
+    if (typeof ZoteroPane.getSelectedLibraryIDs === "function") {
+      return ZoteroPane.getSelectedLibraryIDs() ?? [];
+    }
+    const libraryID = ZoteroPane.getSelectedLibraryID();
+    return typeof libraryID === "number" ? [libraryID] : [];
+  }
   async function getCurrentScopeItems() {
     const itemsInView = getItemsInCurrentView();
     if (itemsInView.length > 0) {
       Zotero.debug(`[FileRenamer] getCurrentScopeItems: using ${itemsInView.length} item(s) from current view`);
       return itemsInView;
     }
-    let itemsToScan = [];
+    const itemsToScan = [];
+    const seenItemIDs = /* @__PURE__ */ new Set();
+    const addItems = (items) => {
+      for (const item of items) {
+        const itemID = item ? getItemID(item) : void 0;
+        if (itemID !== void 0) {
+          if (seenItemIDs.has(itemID)) continue;
+          seenItemIDs.add(itemID);
+        }
+        itemsToScan.push(item);
+      }
+    };
     try {
-      const activeCollection = ZoteroPane.getSelectedCollection();
-      Zotero.debug(`[FileRenamer] getCurrentScopeItems: activeCollection = ${activeCollection}`);
-      if (activeCollection) {
-        const children = activeCollection.getChildItems(false);
-        if (Array.isArray(children) && children.length > 0) {
-          if (typeof children[0] === "number") {
-            itemsToScan = Zotero.Items.get(children);
-          } else {
-            itemsToScan = children;
-          }
+      const collections = getSelectedCollections();
+      Zotero.debug(`[FileRenamer] getCurrentScopeItems: ${collections.length} selected collection(s)`);
+      if (collections.length > 0) {
+        for (const collection of collections) {
+          const children = collection.getChildItems(false);
+          if (!Array.isArray(children) || children.length === 0) continue;
+          addItems(
+            typeof children[0] === "number" ? Zotero.Items.get(children) : children
+          );
         }
       } else {
-        const libraryID = ZoteroPane.getSelectedLibraryID();
-        Zotero.debug(`[FileRenamer] getCurrentScopeItems: no collection, using libraryID = ${libraryID}`);
-        itemsToScan = await Zotero.Items.getAll(libraryID);
+        const libraryIDs = getSelectedLibraryIDs();
+        Zotero.debug(`[FileRenamer] getCurrentScopeItems: no collection, using libraryIDs = ${libraryIDs.join(", ")}`);
+        for (const libraryID of libraryIDs) {
+          addItems(await Zotero.Items.getAll(libraryID));
+        }
       }
     } catch (err) {
       Zotero.logError(`[FileRenamer] getCurrentScopeItems scan error: ${err}`);
@@ -4739,7 +4765,9 @@ html {
 
   // src/modules/titleStyler.ts
   var patchedPrototype;
-  var originalRenderPrimaryCell = null;
+  var patchedMethodName = null;
+  var originalRenderMethod = null;
+  var patchedOwnMethod = false;
   function getItemsViews() {
     const panes = [];
     try {
@@ -4781,7 +4809,7 @@ html {
   }
   function applyTitleStyle(item, cell) {
     const textSpan = cell.querySelector(".cell-text");
-    if (!textSpan || !item) return;
+    if (!textSpan || !item || typeof item.isRegularItem !== "function") return;
     const color = getItemTitleColor(item);
     if (color) {
       textSpan.style.setProperty("color", color, "important");
@@ -4805,11 +4833,18 @@ html {
     const itemsView = getItemsViews()[0];
     if (!itemsView) return;
     const proto = Object.getPrototypeOf(itemsView);
-    if (!proto || typeof proto._renderPrimaryCell !== "function") return;
+    const methodName = typeof proto?._renderPrimaryCell === "function" ? "_renderPrimaryCell" : typeof proto?._renderCell === "function" ? "_renderCell" : null;
+    if (!methodName) return;
+    const originalRender = proto[methodName];
     patchedPrototype = proto;
-    originalRenderPrimaryCell = proto._renderPrimaryCell;
-    proto._renderPrimaryCell = function(index, data, column) {
-      const cell = originalRenderPrimaryCell.apply(this, arguments);
+    patchedMethodName = methodName;
+    originalRenderMethod = originalRender;
+    patchedOwnMethod = Object.prototype.hasOwnProperty.call(proto, methodName);
+    proto[methodName] = function(index, data, column) {
+      const cell = originalRender.apply(this, arguments);
+      if (methodName === "_renderCell" && !column?.primary) {
+        return cell;
+      }
       try {
         const item = this.getRow?.(index)?.ref;
         applyTitleStyle(item, cell);
@@ -4819,10 +4854,16 @@ html {
     };
   }
   function uninstallBasicTitleStyler() {
-    if (!patchedPrototype || !originalRenderPrimaryCell) return;
-    patchedPrototype._renderPrimaryCell = originalRenderPrimaryCell;
+    if (!patchedPrototype || !patchedMethodName || !originalRenderMethod) return;
+    if (patchedOwnMethod) {
+      patchedPrototype[patchedMethodName] = originalRenderMethod;
+    } else {
+      delete patchedPrototype[patchedMethodName];
+    }
     patchedPrototype = null;
-    originalRenderPrimaryCell = null;
+    patchedMethodName = null;
+    originalRenderMethod = null;
+    patchedOwnMethod = false;
   }
 
   // src/hooks.ts

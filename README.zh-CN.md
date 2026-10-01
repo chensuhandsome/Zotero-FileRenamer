@@ -28,7 +28,7 @@ Zotero FileRenamer 用 INSPIRE-HEP 的参考文献与被引关系，为 Zotero �
 
 ## 兼容性
 
-- 需要 Zotero 7 或更高版本
+- 支持 Zotero 7、8、9 和 10（从 v1.1.0 起支持 Zotero 10）
 - 需要目标条目能识别出 INSPIRE recid
 
 插件会按以下顺序识别 INSPIRE recid：
@@ -327,6 +327,14 @@ FileRenamerBase: Base title without labels
 - 标签生成依赖 INSPIRE recid
 - `Update Labels` 虽然只更新选中条目，但一级文献集合仍来自当前 collection 或 library
 - 未标记条目只能手动创建一级标签，不能手动创建派生标签
+
+## 更新日志
+
+### 1.1.0
+
+- 支持 Zotero 10：manifest 允许的最高版本改为 `10.0.*`，Zotero 7-9 仍可使用。
+- 适配 Zotero 10 重构后的条目列表，标题着色恢复正常（1.0.0 使用的渲染钩子在 Zotero 10 中已不存在）。
+- 当前视图没有条目时，标签作用范围改为所有选中的 collection 或 library；在 Zotero 10 的分类栏中多选时不再报错。
 
 ## 开发
 

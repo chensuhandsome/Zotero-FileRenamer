@@ -1,6 +1,6 @@
 {
   "name": "zotero-filerenamer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Auto-number Zotero references by citation hierarchy via INSPIRE-HEP",
   "config": {
     "addonName": "zotero-filerenamer",

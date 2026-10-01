@@ -1,8 +1,12 @@
 import { getLabelsFromItem, hasBasicLabel, hasDerivedLabel } from "./labeler";
 import { Settings } from "./settings";
 
+type RenderMethodName = "_renderPrimaryCell" | "_renderCell";
+
 let patchedPrototype: any;
-let originalRenderPrimaryCell: ((...args: any[]) => HTMLElement) | null = null;
+let patchedMethodName: RenderMethodName | null = null;
+let originalRenderMethod: ((...args: any[]) => HTMLElement) | null = null;
+let patchedOwnMethod = false;
 
 function getItemsViews(): any[] {
   const panes: any[] = [];
@@ -53,7 +57,8 @@ function getItemTitleColor(item: Zotero.Item): string | null {
 
 function applyTitleStyle(item: Zotero.Item | undefined, cell: HTMLElement): void {
   const textSpan = cell.querySelector(".cell-text") as HTMLElement | null;
-  if (!textSpan || !item) return;
+  // Zotero 10 item lists can also contain collection, search and library-header rows.
+  if (!textSpan || !item || typeof item.isRegularItem !== "function") return;
 
   const color = getItemTitleColor(item);
   if (color) {
@@ -83,13 +88,27 @@ export function installBasicTitleStyler(): void {
   if (!itemsView) return;
 
   const proto = Object.getPrototypeOf(itemsView);
-  if (!proto || typeof proto._renderPrimaryCell !== "function") return;
+  // Zotero 7-9 render titles in ItemTree#_renderPrimaryCell; Zotero 10 renders
+  // every cell through ItemTree#_renderCell.
+  const methodName: RenderMethodName | null =
+    typeof proto?._renderPrimaryCell === "function"
+      ? "_renderPrimaryCell"
+      : typeof proto?._renderCell === "function"
+        ? "_renderCell"
+        : null;
+  if (!methodName) return;
 
+  const originalRender = proto[methodName] as (...args: any[]) => HTMLElement;
   patchedPrototype = proto;
-  originalRenderPrimaryCell = proto._renderPrimaryCell;
+  patchedMethodName = methodName;
+  originalRenderMethod = originalRender;
+  patchedOwnMethod = Object.prototype.hasOwnProperty.call(proto, methodName);
 
-  proto._renderPrimaryCell = function(index: number, data: string, column: any) {
-    const cell = originalRenderPrimaryCell!.apply(this, arguments as any);
+  proto[methodName] = function(index: number, data: string, column: any) {
+    const cell = originalRender.apply(this, arguments as any);
+    if (methodName === "_renderCell" && !column?.primary) {
+      return cell;
+    }
     try {
       const item = this.getRow?.(index)?.ref as Zotero.Item | undefined;
       applyTitleStyle(item, cell);
@@ -101,8 +120,14 @@ export function installBasicTitleStyler(): void {
 }
 
 export function uninstallBasicTitleStyler(): void {
-  if (!patchedPrototype || !originalRenderPrimaryCell) return;
-  patchedPrototype._renderPrimaryCell = originalRenderPrimaryCell;
+  if (!patchedPrototype || !patchedMethodName || !originalRenderMethod) return;
+  if (patchedOwnMethod) {
+    patchedPrototype[patchedMethodName] = originalRenderMethod;
+  } else {
+    delete patchedPrototype[patchedMethodName];
+  }
   patchedPrototype = null;
-  originalRenderPrimaryCell = null;
+  patchedMethodName = null;
+  originalRenderMethod = null;
+  patchedOwnMethod = false;
 }

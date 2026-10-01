@@ -554,6 +554,23 @@ export function getItemsInCurrentView(): Zotero.Item[] {
   return [];
 }
 
+// Zotero 10 removed the singular selection getters; Zotero 7-9 may lack the plural ones.
+function getSelectedCollections(): any[] {
+  if (typeof ZoteroPane.getSelectedCollections === "function") {
+    return ZoteroPane.getSelectedCollections() ?? [];
+  }
+  const collection = ZoteroPane.getSelectedCollection();
+  return collection ? [collection] : [];
+}
+
+function getSelectedLibraryIDs(): number[] {
+  if (typeof ZoteroPane.getSelectedLibraryIDs === "function") {
+    return ZoteroPane.getSelectedLibraryIDs() ?? [];
+  }
+  const libraryID = ZoteroPane.getSelectedLibraryID();
+  return typeof libraryID === "number" ? [libraryID] : [];
+}
+
 async function getCurrentScopeItems(): Promise<Zotero.Item[]> {
   const itemsInView = getItemsInCurrentView();
   if (itemsInView.length > 0) {
@@ -561,25 +578,39 @@ async function getCurrentScopeItems(): Promise<Zotero.Item[]> {
     return itemsInView;
   }
 
-  let itemsToScan: Zotero.Item[] = [];
+  const itemsToScan: Zotero.Item[] = [];
+  const seenItemIDs = new Set<number>();
+  const addItems = (items: Zotero.Item[]) => {
+    for (const item of items) {
+      const itemID = item ? getItemID(item) : undefined;
+      if (itemID !== undefined) {
+        if (seenItemIDs.has(itemID)) continue;
+        seenItemIDs.add(itemID);
+      }
+      itemsToScan.push(item);
+    }
+  };
 
   try {
-    const activeCollection = ZoteroPane.getSelectedCollection();
-    Zotero.debug(`[FileRenamer] getCurrentScopeItems: activeCollection = ${activeCollection}`);
+    const collections = getSelectedCollections();
+    Zotero.debug(`[FileRenamer] getCurrentScopeItems: ${collections.length} selected collection(s)`);
 
-    if (activeCollection) {
-      const children = activeCollection.getChildItems(false);
-      if (Array.isArray(children) && children.length > 0) {
-        if (typeof children[0] === "number") {
-          itemsToScan = Zotero.Items.get(children as number[]);
-        } else {
-          itemsToScan = children as Zotero.Item[];
-        }
+    if (collections.length > 0) {
+      for (const collection of collections) {
+        const children = collection.getChildItems(false);
+        if (!Array.isArray(children) || children.length === 0) continue;
+        addItems(
+          typeof children[0] === "number"
+            ? Zotero.Items.get(children as number[])
+            : (children as Zotero.Item[]),
+        );
       }
     } else {
-      const libraryID = ZoteroPane.getSelectedLibraryID();
-      Zotero.debug(`[FileRenamer] getCurrentScopeItems: no collection, using libraryID = ${libraryID}`);
-      itemsToScan = await Zotero.Items.getAll(libraryID);
+      const libraryIDs = getSelectedLibraryIDs();
+      Zotero.debug(`[FileRenamer] getCurrentScopeItems: no collection, using libraryIDs = ${libraryIDs.join(", ")}`);
+      for (const libraryID of libraryIDs) {
+        addItems(await Zotero.Items.getAll(libraryID));
+      }
     }
   } catch (err) {
     Zotero.logError(`[FileRenamer] getCurrentScopeItems scan error: ${err}`);

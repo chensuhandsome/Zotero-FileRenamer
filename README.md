@@ -24,7 +24,7 @@ The visible label prefix is written into the Zotero title field, while the manag
 
 ## Requirements
 
-- Zotero 7 or newer
+- Zotero 7, 8, 9 or 10 (Zotero 10 is supported from v1.1.0)
 - INSPIRE recids available on items you want to derive labels for
 
 The plugin looks for an INSPIRE recid in this order:
@@ -353,6 +353,14 @@ Typical warnings include:
 - `Update Labels` uses the current view basic set, even when only a few items are selected
 - only `Mark as Basic` creates a new basic label on demand
 - only basic labels may be created by hand on an unlabeled item
+
+## Changelog
+
+### 1.1.0
+
+- Zotero 10 support: the manifest now allows Zotero up to `10.0.*`, and Zotero 7-9 remain supported.
+- Title highlighting works again with the Zotero 10 items list, which no longer has the render hook used in 1.0.0.
+- When the current view has no items, the label scope falls back to every selected collection or library, so selecting several rows in the Zotero 10 collections pane no longer raises an error.
 
 ## Development
 
